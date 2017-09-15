@@ -1,5 +1,3 @@
-<!-- client.html -->
-
 <!DOCTYPE html>
 <html>
   <head>
@@ -9,8 +7,9 @@
       .chat_log{ width: 75%; height: 200px; }
       .user_list{ width: 20%; height: 200px; }
       .name{ width: 10%; }
-      .message{ width: 70%; }
+      .message{ width: 60%; }
       .chat{ width: 10%; }
+      .changeName{ width: 10%; }
     </style>
   </head>
   <body>
@@ -22,6 +21,7 @@
     </div>
     <form id="chat">
       <input id="name" class="name" type="text" readonly>
+      <button type="button" class="changeName" onclick="changeName()">changeName</button>
       <input id="message" class="message" type="text">
       <input type="submit" class="chat" value="chat"/>
     </form>
@@ -30,37 +30,55 @@
     <script src="//code.jquery.com/jquery-1.11.1.js"></script>
     <script>
       // io.connect() || io() 하면 기본적으로 서버세팅을 따라감
-      var socket = io.connect('127.0.0.1:3000'); //1
+      var socket = io.connect('127.0.0.1:3000');
       var userList = [];
+
       socket.on('connect_user', function(users){
-        $('#userList').html('');
-        $('#userList').append('본인' + '\n');
-        users.splice(users.findIndex(user => user == $('#name').val()), 1);
-        users.forEach(user => {
-          $('#userList').append(user + '\n');
-        });
+        refreshUsers(users);
         if(users[users.length-1] != $('#name').val()) $('#chatLog').append(`[${users[users.length-1]}] 님이 접속하셨습니다.\n`);
       });
 
-      $('#chat').on('submit', function(e){ //2
+      $('#chat').on('submit', function(e){ 
         socket.emit('send message', $('#name').val(), $('#message').val());
         $('#message').val('');
         $('#message').focus();
         e.preventDefault();
       });
 
-      socket.on('receive message', function(msg){ //3
+      socket.on('receive message', function(msg){ 
         $('#chatLog').append(msg+'\n');
         $('#chatLog').scrollTop($('#chatLog')[0].scrollHeight);
       });
 
-      socket.on('set_name', function(name){ //4
+      socket.on('set_name', function(name){ 
         $('#name').val(name);
       });
 
       socket.on('disconnect_user', function(name){
         $('#chatLog').append(`[${name}] 님이 접속을 종료하셨습니다.\n`);
       });
+
+      socket.on('alert_change_name', function(users, old, newName){
+        refreshUsers(users);
+        $('#chatLog').append(`[${old}] 님이 닉네임을 [${newName}] 으로 변경했습니다.\n`);
+      });
+
+      var refreshUsers = function(users){
+        $('#userList').html('');
+        $('#userList').append('본인' + '\n');
+        if(users.length == 1) return;
+        
+        users.splice(users.findIndex(user => user == $('#name').val()), 1);
+        users.forEach(user => {
+          $('#userList').append(user + '\n');
+        });
+      }
+
+      var changeName = function(){
+        var newName = prompt("Input your new Nickname:");
+        $('#name').val(newName);
+        socket.emit('change_name', newName);
+      }
     </script>
   </body>
 </html>

@@ -9,7 +9,14 @@ app.get('/', (req, res) => {
 var userList = {};
 var count = 1;
 io.on('connection', socket => {
-	console.log(io.engine.clientsCount, io.sockets.sockets);
+	//console.log(io.engine.clientsCount, io.sockets.sockets);
+	//console.log('users', io.sockets.clients());
+
+	io.clients((err, clients) => {
+		if(err) throw err;
+		console.log('clients', clients, userList);
+	});
+
 	var name = 'user' + count++;
 	console.log('user connectied: ', name);
 	userList[name] = socket.id;
@@ -17,7 +24,7 @@ io.on('connection', socket => {
 	io.emit('connect_user', Object.keys(userList));
 
 	socket.on('disconnect', () => {
-		var disUser = Object.keys(userList).find(id => userList[id] == socket.id);
+		var disUser = findUser(userList, socket);
 		console.log('user disconnected: ', disUser);
 		io.emit('disconnect_user', disUser);
 		delete userList[disUser];
@@ -29,7 +36,19 @@ io.on('connection', socket => {
 		console.log(msg);
 		io.emit('receive message', msg);
 	});
+
+	socket.on('change_name', newName => {
+		var name = findUser(userList, socket);
+		delete userList[name];
+		userList[newName] = socket.id;
+		console.log(`NickName ${name} => ${newName} change!`);
+		io.emit('alert_change_name', Object.keys(userList), name, newName);
+	});
 });
+
+function findUser(userList, socket){
+	return Object.keys(userList).find(id => userList[id] == socket.id);
+}
 
 http.listen(3000, () => {
 	console.log('server on!');
