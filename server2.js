@@ -4,7 +4,7 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http)
 
 app.get('/', (req, res) => {
-	res.sendFile(__dirname + '/client.html');
+	res.sendFile(__dirname + '/client2.html');
 });
 var userList = {};
 var count = 1;
@@ -12,14 +12,14 @@ io.on('connection', socket => {
 	io.clients((err, clients) => {
 		if(err) throw err;
 		clients.forEach(client => {userList[client] = '';})
-		console.log('clients', clients, userList);
+		console.log('clients', userList);
 	});
 
 	var name = 'user' + count++;
 	console.log('user connectied: ', name);
 	userList[name] = socket.id;
 	io.to(socket.id).emit('set_name', name);
-	io.emit('connect_user', Object.keys(userList));
+	io.emit('connect_user', userList);
 
 	socket.on('enter_name', (name) => {
 

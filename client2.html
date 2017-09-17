@@ -39,8 +39,25 @@
       var userList = [];
 
       socket.on('connect_user', function(users){
-        refreshUsers(users);
-        if(users[users.length-1] != $('#name').val()) $('#chatLog').append(`[${users[users.length-1]}] 님이 접속하셨습니다.\n`);
+        var key;
+        for(var k in users){
+          if(k == socket.id) {
+            key = k;
+          }
+        }
+        $('#chatLog').append(`[${users[key]}] 님이 접속하셨습니다.\n`);
+        delete users[key];
+
+        $('#userList').html('');
+        $('#userList').append('본인' + '\n');
+        if(Object.keys(users).length > 0){
+          for(var k in users){
+            $('#userList').append(users[k] + '\n');
+          }
+        }
+
+//        refreshUsers(users);
+//        if(users[users.length-1] != $('#name').val()) $('#chatLog').append(`[${users[users.length-1]}] 님이 접속하셨습니다.\n`);
       });
 
       $('#chat').on('submit', function(e){ 
